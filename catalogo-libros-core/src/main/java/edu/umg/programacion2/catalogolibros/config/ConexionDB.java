@@ -10,7 +10,7 @@ public class ConexionDB {
             "jdbc:mysql://localhost:3306/catalogo_libros_db?useSSL=false&serverTimezone=UTC";
 
     private static final String USUARIO = "root";
-    private static final String CONTRASENA = System.getenv("DB_PASSWORD");
+    private static final String CONTRASENA = "Juanpii-02";
 
     private ConexionDB() {
     }

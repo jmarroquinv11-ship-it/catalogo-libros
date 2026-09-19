@@ -1,6 +1,7 @@
 package edu.umg.programacion2.catalogolibros.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class Libro {
 
@@ -11,6 +12,7 @@ public class Libro {
     private BigDecimal precio;
     private int existencias;
     private int anioPublicacion;
+    private LocalDate fechaIngresoCatalogo;
 
     public Libro() {
     }
@@ -92,6 +94,14 @@ public class Libro {
         this.anioPublicacion = anioPublicacion;
     }
 
+    public LocalDate getFechaIngresoCatalogo() {
+        return fechaIngresoCatalogo;
+    }
+
+    public void setFechaIngresoCatalogo(LocalDate fechaIngresoCatalogo) {
+        this.fechaIngresoCatalogo = fechaIngresoCatalogo;
+    }
+    
     @Override
     public String toString() {
         return "Libro{" +

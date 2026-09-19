@@ -1,6 +1,7 @@
 package edu.umg.programacion2.catalogolibros.dao;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,8 +17,8 @@ public class LibroDAO {
     public boolean guardar(Libro libro) {
 
         String sql = "INSERT INTO libros "
-                + "(titulo, autor, categoria, precio, existencias, anio_publicacion) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+                + "(titulo, autor, categoria, precio, existencias, anio_publicacion, fecha_ingreso_catalogo) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conexion = ConexionDB.obtenerConexion();
              PreparedStatement ps = conexion.prepareStatement(
@@ -30,11 +31,18 @@ public class LibroDAO {
             ps.setInt(5, libro.getExistencias());
             ps.setInt(6, libro.getAnioPublicacion());
 
+            if (libro.getFechaIngresoCatalogo() != null) {
+                ps.setDate(7, Date.valueOf(libro.getFechaIngresoCatalogo()));
+            } else {
+                ps.setDate(7, null);
+            }
+
             int filas = ps.executeUpdate();
 
             if (filas > 0) {
 
                 try (ResultSet rs = ps.getGeneratedKeys()) {
+
                     if (rs.next()) {
                         libro.setId(rs.getInt(1));
                     }
@@ -72,6 +80,12 @@ public class LibroDAO {
                 libro.setExistencias(rs.getInt("existencias"));
                 libro.setAnioPublicacion(rs.getInt("anio_publicacion"));
 
+                Date fecha = rs.getDate("fecha_ingreso_catalogo");
+
+                if (fecha != null) {
+                    libro.setFechaIngresoCatalogo(fecha.toLocalDate());
+                }
+
                 libros.add(libro);
             }
 
@@ -105,6 +119,12 @@ public class LibroDAO {
                     libro.setExistencias(rs.getInt("existencias"));
                     libro.setAnioPublicacion(rs.getInt("anio_publicacion"));
 
+                    Date fecha = rs.getDate("fecha_ingreso_catalogo");
+
+                    if (fecha != null) {
+                        libro.setFechaIngresoCatalogo(fecha.toLocalDate());
+                    }
+
                     return libro;
                 }
             }
@@ -124,7 +144,8 @@ public class LibroDAO {
                 + "categoria = ?, "
                 + "precio = ?, "
                 + "existencias = ?, "
-                + "anio_publicacion = ? "
+                + "anio_publicacion = ?, "
+                + "fecha_ingreso_catalogo = ? "
                 + "WHERE id = ?";
 
         try (Connection conexion = ConexionDB.obtenerConexion();
@@ -136,7 +157,14 @@ public class LibroDAO {
             ps.setBigDecimal(4, libro.getPrecio());
             ps.setInt(5, libro.getExistencias());
             ps.setInt(6, libro.getAnioPublicacion());
-            ps.setInt(7, libro.getId());
+
+            if (libro.getFechaIngresoCatalogo() != null) {
+                ps.setDate(7, Date.valueOf(libro.getFechaIngresoCatalogo()));
+            } else {
+                ps.setDate(7, null);
+            }
+
+            ps.setInt(8, libro.getId());
 
             return ps.executeUpdate() > 0;
 

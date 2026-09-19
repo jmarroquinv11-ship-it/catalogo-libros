@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -31,11 +33,13 @@ public class VentanaLibros extends JFrame {
     private JTextField txtPrecio;
     private JTextField txtExistencias;
     private JTextField txtAnio;
+    private JTextField txtFechaIngreso;
 
     private JButton btnGuardar;
     private JButton btnActualizar;
     private JButton btnEliminar;
     private JButton btnLimpiar;
+    private JButton btnVerResumen;
 
     private JTable tablaLibros;
     private DefaultTableModel modeloTabla;
@@ -49,7 +53,7 @@ public class VentanaLibros extends JFrame {
         libroDAO = new LibroDAO();
 
         setTitle("Catálogo de Libros");
-        setSize(900, 600);
+        setSize(1000, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -61,7 +65,7 @@ public class VentanaLibros extends JFrame {
 
         setLayout(new BorderLayout(10, 10));
 
-        JPanel panelFormulario = new JPanel(new GridLayout(6, 2, 10, 10));
+        JPanel panelFormulario = new JPanel(new GridLayout(7, 2, 10, 10));
         panelFormulario.setBorder(
                 BorderFactory.createTitledBorder("Datos del Libro"));
 
@@ -71,6 +75,7 @@ public class VentanaLibros extends JFrame {
         txtPrecio = new JTextField();
         txtExistencias = new JTextField();
         txtAnio = new JTextField();
+        txtFechaIngreso = new JTextField();
 
         panelFormulario.add(new JLabel("Título:"));
         panelFormulario.add(txtTitulo);
@@ -90,6 +95,9 @@ public class VentanaLibros extends JFrame {
         panelFormulario.add(new JLabel("Año de publicación:"));
         panelFormulario.add(txtAnio);
 
+        panelFormulario.add(new JLabel("Fecha ingreso (AAAA-MM-DD):"));
+        panelFormulario.add(txtFechaIngreso);
+
         add(panelFormulario, BorderLayout.NORTH);
 
         modeloTabla = new DefaultTableModel(
@@ -100,7 +108,8 @@ public class VentanaLibros extends JFrame {
                         "Categoría",
                         "Precio",
                         "Existencias",
-                        "Año"
+                        "Año",
+                        "Fecha ingreso"
                 }, 0) {
 
             private static final long serialVersionUID = 1L;
@@ -125,21 +134,21 @@ public class VentanaLibros extends JFrame {
         btnActualizar = new JButton("Actualizar");
         btnEliminar = new JButton("Eliminar");
         btnLimpiar = new JButton("Limpiar");
-
+        btnVerResumen = new JButton("Ver resumen");
+        
         panelBotones.add(btnGuardar);
         panelBotones.add(btnActualizar);
         panelBotones.add(btnEliminar);
         panelBotones.add(btnLimpiar);
+        panelBotones.add(btnVerResumen);
 
         add(panelBotones, BorderLayout.SOUTH);
 
         btnGuardar.addActionListener(e -> guardarLibro());
-
         btnActualizar.addActionListener(e -> actualizarLibro());
-
         btnEliminar.addActionListener(e -> eliminarLibro());
-
         btnLimpiar.addActionListener(e -> limpiarCampos());
+        btnVerResumen.addActionListener(e -> verResumen());
 
         tablaLibros.getSelectionModel().addListSelectionListener(e -> {
 
@@ -156,6 +165,7 @@ public class VentanaLibros extends JFrame {
             String titulo = txtTitulo.getText().trim();
             String autor = txtAutor.getText().trim();
             String categoria = txtCategoria.getText().trim();
+            String fechaTexto = txtFechaIngreso.getText().trim();
 
             BigDecimal precio =
                     new BigDecimal(txtPrecio.getText().trim());
@@ -168,7 +178,8 @@ public class VentanaLibros extends JFrame {
 
             if (titulo.isEmpty()
                     || autor.isEmpty()
-                    || categoria.isEmpty()) {
+                    || categoria.isEmpty()
+                    || fechaTexto.isEmpty()) {
 
                 JOptionPane.showMessageDialog(
                         this,
@@ -178,6 +189,8 @@ public class VentanaLibros extends JFrame {
                 return;
             }
 
+            LocalDate fechaIngreso = LocalDate.parse(fechaTexto);
+
             Libro libro = new Libro(
                     titulo,
                     autor,
@@ -186,6 +199,8 @@ public class VentanaLibros extends JFrame {
                     existencias,
                     anio
             );
+
+            libro.setFechaIngresoCatalogo(fechaIngreso);
 
             if (libroDAO.guardar(libro)) {
 
@@ -210,6 +225,13 @@ public class VentanaLibros extends JFrame {
             JOptionPane.showMessageDialog(
                     this,
                     "Precio, existencias y año deben ser valores numéricos."
+            );
+
+        } catch (DateTimeParseException e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "La fecha debe tener el formato AAAA-MM-DD."
             );
         }
     }
@@ -251,6 +273,10 @@ public class VentanaLibros extends JFrame {
                     )
             );
 
+            libro.setFechaIngresoCatalogo(
+                    LocalDate.parse(txtFechaIngreso.getText().trim())
+            );
+
             if (libroDAO.actualizar(libro)) {
 
                 JOptionPane.showMessageDialog(
@@ -274,6 +300,13 @@ public class VentanaLibros extends JFrame {
             JOptionPane.showMessageDialog(
                     this,
                     "Verifique los valores numéricos."
+            );
+
+        } catch (DateTimeParseException e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "La fecha debe tener el formato AAAA-MM-DD."
             );
         }
     }
@@ -353,6 +386,12 @@ public class VentanaLibros extends JFrame {
             txtAnio.setText(
                     modeloTabla.getValueAt(fila, 6).toString()
             );
+
+            Object fecha = modeloTabla.getValueAt(fila, 7);
+
+            txtFechaIngreso.setText(
+                    fecha == null ? "" : fecha.toString()
+            );
         }
     }
 
@@ -372,7 +411,8 @@ public class VentanaLibros extends JFrame {
                             libro.getCategoria(),
                             libro.getPrecio(),
                             libro.getExistencias(),
-                            libro.getAnioPublicacion()
+                            libro.getAnioPublicacion(),
+                            libro.getFechaIngresoCatalogo()
                     }
             );
         }
@@ -386,6 +426,7 @@ public class VentanaLibros extends JFrame {
         txtPrecio.setText("");
         txtExistencias.setText("");
         txtAnio.setText("");
+        txtFechaIngreso.setText("");
 
         idSeleccionado = -1;
 
@@ -393,7 +434,29 @@ public class VentanaLibros extends JFrame {
 
         txtTitulo.requestFocus();
     }
+    
+    private void verResumen() {
 
+        List<Libro> libros = libroDAO.listar();
+
+        int totalLibros = libros.size();
+        int librosConExistencias = 0;
+
+        for (Libro libro : libros) {
+            if (libro.getExistencias() > 0) {
+                librosConExistencias++;
+            }
+        }
+
+        JOptionPane.showMessageDialog(
+            this,
+            "Total de libros registrados: " + totalLibros
+            + "\nLibros con existencias: " + librosConExistencias,
+            "Resumen del catálogo",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+    
     public static void main(String[] args) {
 
         SwingUtilities.invokeLater(() -> {
